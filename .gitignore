@@ -31,3 +31,4 @@ docs/openapi/v3/
 /bin/
 
 node_modules/
+.env
