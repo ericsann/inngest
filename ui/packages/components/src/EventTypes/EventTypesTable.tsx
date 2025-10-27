@@ -214,7 +214,6 @@ export function EventTypesTable({
           onIntersect={fetchNextPage}
           hasMore={hasNextPage ?? false}
           isLoading={isFetching || isFetchingNextPage}
-          root={containerRef.current}
         />
         {!hasNextPage &&
           hasEventTypesData &&

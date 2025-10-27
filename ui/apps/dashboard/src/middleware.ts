@@ -11,7 +11,6 @@ const isPublicRoute = createRouteMatcher([
   '/sign-up(.*)',
   '/support',
   '/api/sentry',
-  '/api/inngest(.*)',
 ]);
 
 const homepagePath = process.env.NEXT_PUBLIC_HOME_PATH;

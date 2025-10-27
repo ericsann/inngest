@@ -41,15 +41,9 @@ export default function Page() {
     'polling-disabled',
     false
   );
-  const { value: tracesPreviewEnabled, isReady: tracesPreviewFlagReady } = booleanFlag(
-    'traces-preview',
-    true,
-    true
-  );
-
   const [autoRefresh, setAutoRefresh] = useState(true);
-  const [preview, setPreview] = useState(false);
 
+  const [tracesPreviewEnabled, setTracesPreviewEnabled] = useState(true);
   const [filterApp] = useStringArraySearchParam('filterApp');
   const [totalCount, setTotalCount] = useState<number>();
   const [filteredStatus] = useValidatedArraySearchParam('filterStatus', isFunctionRunStatus);
@@ -70,10 +64,6 @@ export default function Page() {
     }
   }, [pollingDisabled, pollingFlagReady]);
 
-  useEffect(() => {
-    setPreview(tracesPreviewEnabled);
-  }, [tracesPreviewEnabled, tracesPreviewFlagReady]);
-
   const queryFn = useCallback(
     async ({ pageParam }: { pageParam: string | null }) => {
       const data: GetRunsQuery = await client.request(GetRunsDocument, {
@@ -84,7 +74,7 @@ export default function Page() {
         status: filteredStatus,
         timeField,
         celQuery: search,
-        preview,
+        preview: tracesPreviewEnabled,
       });
 
       const edges = data.runs.edges.map((edge) => {
@@ -105,24 +95,12 @@ export default function Page() {
         edges,
       };
     },
-    [filterApp, filteredStatus, calculatedStartTime, timeField, search, preview]
+    [filterApp, filteredStatus, calculatedStartTime, timeField, search, tracesPreviewEnabled]
   );
 
   const { data, error, fetchNextPage, isFetching, hasNextPage } = useInfiniteQuery({
-    queryKey: [
-      'runs',
-      {
-        filterApp,
-        filteredStatus,
-        calculatedStartTime,
-        endTime,
-        timeField,
-        search,
-        preview,
-      },
-    ],
+    queryKey: ['runs'],
     queryFn,
-    enabled: tracesPreviewFlagReady,
     refetchInterval: autoRefresh ? pollInterval : false,
     initialPageParam: null,
     getNextPageParam: (lastPage) => {
@@ -188,9 +166,10 @@ export default function Page() {
             />
             <RunsActionMenu
               setAutoRefresh={() => setAutoRefresh((v) => !v)}
-              setPreview={() => setPreview((p) => !p)}
               autoRefresh={autoRefresh}
               intervalSeconds={pollInterval / 1000}
+              toggleTracesPreview={() => setTracesPreviewEnabled((v) => !v)}
+              tracesPreviewEnabled={tracesPreviewEnabled}
             />
           </div>
         }
@@ -213,14 +192,13 @@ export default function Page() {
         scope="env"
         totalCount={totalCount}
         searchError={searchError}
-        infiniteScrollTrigger={(containerRef) => (
+        infiniteScrollTrigger={
           <InfiniteScrollTrigger
             onIntersect={fetchNextPage}
             hasMore={hasNextPage ?? false}
             isLoading={isFetching}
-            root={containerRef}
           />
-        )}
+        }
       />
     </>
   );

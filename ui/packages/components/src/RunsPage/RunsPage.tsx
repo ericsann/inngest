@@ -62,8 +62,7 @@ type Props = {
   scope: ViewScope;
   totalCount: number | undefined;
   searchError?: Error;
-  error?: Error | null;
-  infiniteScrollTrigger?: (containerRef: HTMLDivElement | null) => React.ReactNode;
+  infiniteScrollTrigger?: React.ReactNode;
 };
 
 export function RunsPage({
@@ -83,7 +82,6 @@ export function RunsPage({
   scope,
   totalCount,
   searchError,
-  error,
   infiniteScrollTrigger,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -237,6 +235,7 @@ export function RunsPage({
             pollInterval={pollInterval}
             runID={rowData.id}
             standalone={false}
+            tracesPreviewEnabled={features.tracesPreview ?? false}
           />
         </div>
       );
@@ -376,14 +375,12 @@ export function RunsPage({
         <RunsTable
           data={data}
           isLoading={isLoadingInitial}
-          error={error}
-          onRefresh={onRefresh}
           renderSubComponent={renderSubComponent}
           getRowCanExpand={() => true}
           visibleColumns={columnVisibility}
           scope={scope}
         />
-        {infiniteScrollTrigger?.(containerRef.current)}
+        {infiniteScrollTrigger}
         {!hasMore && data.length > 1 && (
           <div className="flex flex-col items-center pt-8">
             <p className="text-muted">No additional runs found.</p>
@@ -395,7 +392,7 @@ export function RunsPage({
             />
           </div>
         )}
-        {onRefresh && !error && (
+        {onRefresh && (
           <div className="flex flex-col items-center pt-2">
             <Button
               kind="secondary"

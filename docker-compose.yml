@@ -24,6 +24,25 @@ services:
       retries: 3
       start_period: 40s
 
+  dev-server-ui:
+    build:
+      context: ./ui
+      dockerfile: apps/dev-server-ui/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_BASE_URL=http://inngest:8288
+      - INNGEST_DEV_DASHBOARD_PASSWORD=1234
+    depends_on:
+      inngest:
+        condition: service_healthy
+    networks:
+      - inngest-network
+    volumes:
+      - ./ui/apps/dev-server-ui:/app
+      - /app/node_modules
+      - /app/.next
+
   postgres:
     image: postgres:17
     environment:

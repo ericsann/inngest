@@ -382,7 +382,6 @@ export const GET_RUN = gql`
         name
         slug
       }
-      status
       trace(preview: $preview) {
         ...TraceDetails
         childrenSpans {

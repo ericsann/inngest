@@ -5,7 +5,7 @@ import { InlineSpans } from './InlineSpans';
 import { StepType } from './StepType';
 import { TimelineHeader } from './TimelineHeader';
 import { type Trace } from './types';
-import { getSpanName, traceHasChildren, useStepSelection } from './utils';
+import { FINAL_SPAN_NAME, getSpanName, useStepSelection } from './utils';
 
 type Props = {
   depth: number;
@@ -22,8 +22,16 @@ export function Trace({ depth, maxTime, minTime, trace, runID }: Props) {
   const { selectStep, selectedStep } = useStepSelection({ runID });
   const expanderRef = useRef<HTMLDivElement>(null);
 
-  const hasChildren = traceHasChildren(depth, trace);
-
+  //
+  // Don't show single finalization step for successful runs
+  // unless they have children (e.g. failed attempts)
+  const hasChildren =
+    depth === 0 &&
+    trace.childrenSpans?.length === 1 &&
+    trace.childrenSpans[0]?.name === FINAL_SPAN_NAME &&
+    (trace.childrenSpans[0]?.childrenSpans?.length ?? 0) == 0
+      ? false
+      : (trace.childrenSpans?.length ?? 0) > 0;
   const spanName = getSpanName(trace.name);
   return (
     <div className="relative flex w-full flex-col">

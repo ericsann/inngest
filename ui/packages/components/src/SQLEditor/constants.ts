@@ -6,7 +6,6 @@ export const EDITOR_OPTIONS: editor.IEditorOptions = {
   autoClosingBrackets: 'always',
   autoClosingQuotes: 'always',
   contextmenu: false,
-  fixedOverflowWidgets: true,
   fontFamily: FONT.font,
   fontSize: FONT.size,
   fontWeight: 'light',

@@ -44,6 +44,7 @@ export function getStatusBackgroundClass(status: string): string {
     !isAppStatus(status) &&
     !isReplayStatus(status)
   ) {
+    console.error(`unexpected status: ${status}`);
     return backgroundClasses['UNKNOWN'];
   }
   return backgroundClasses[status];
@@ -84,6 +85,7 @@ export function getStatusBorderClass(status: string): string {
     !isAppStatus(status) &&
     !isReplayStatus(status)
   ) {
+    console.error(`unexpected status: ${status}`);
     return cn('border', borderClasses['UNKNOWN']);
   }
   return cn('border', borderClasses[status]);
@@ -124,6 +126,7 @@ export function getStatusTextClass(status: string): string {
     !isAppStatus(status) &&
     !isReplayStatus(status)
   ) {
+    console.error(`unexpected status: ${status}`);
     return textClasses['UNKNOWN'];
   }
   return textClasses[status];

@@ -4,7 +4,7 @@ import { SQLEditor } from '@inngest/components/SQLEditor/SQLEditor';
 
 import { useInsightsStateMachineContext } from '../InsightsStateMachineContext/InsightsStateMachineContext';
 import { SQL_COMPLETION_CONFIG } from './constants';
-import { useInsightsSQLEditorOnMountCallback } from './hooks/useInsightsSQLEditorOnMountCallback';
+import { useInsightsSQLEditorOnMountCallback } from './useInsightsSQLEditorOnMountCallback';
 
 export function InsightsSQLEditor() {
   const { onChange, query } = useInsightsStateMachineContext();

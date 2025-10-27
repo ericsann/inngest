@@ -66,7 +66,6 @@ const query = graphql(`
           name
           slug
         }
-        status
         trace(preview: $preview) {
           ...TraceDetails
           childrenSpans {
