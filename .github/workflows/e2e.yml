@@ -1,0 +1,165 @@
+name: SDK E2E Tests
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "ui/**"
+  pull_request:
+    paths-ignore:
+      - "ui/**"
+
+permissions:
+  contents: read
+
+env:
+  GOCOVERDIR: "coverage"
+
+jobs:
+  ts:
+    name: "TS SDK / OS: (${{ matrix.os }}), key-queues: ${{ matrix.experimentalKeyQueues }}"
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        experimentalKeyQueues: [false, true]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: ./go.mod
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.18.2
+
+      - name: Build UI
+        run: make build-ui
+
+      - name: Build dev serve
+        run: |
+          go build -cover -o ./inngest-bin ./cmd
+
+      - name: Run E2E tests
+        run: |
+          cd ./tests/js
+          pnpm install --frozen-lockfile
+          pnpm dev &
+          sleep 5
+          cd ../../
+          echo "Running dev server"
+          mkdir $GOCOVERDIR
+          nohup ./inngest-bin dev --no-discovery 2> /tmp/dev-output.txt &
+          echo "Ran dev server"
+          sleep 5
+          curl http://127.0.0.1:8288/dev > /dev/null 2> /dev/null
+          go test ./tests -v
+        env:
+          INNGEST_SIGNING_KEY: test
+          API_URL: http://127.0.0.1:8288
+          SDK_URL: http://127.0.0.1:3000/api/inngest
+          TEST_MODE: true
+          EXPERIMENTAL_KEY_QUEUES_ENABLE: "${{ matrix.experimentalKeyQueues }}"
+
+      - name: Convert coverage for tooling
+        run: |
+          ls -la $GOCOVERDIR
+          # pass in all the directories in coverage to be merged
+          go tool covdata percent -i=$GOCOVERDIR | tee coverage.txt
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: ts-e2e,kq-${{ matrix.experimentalKeyQueues }}
+
+  # refs:
+  #  - https://go.dev/doc/build-cover
+  golang:
+    name: "Go SDK / OS: (${{ matrix.os }}), key-queues: ${{ matrix.experimentalKeyQueues }} / split: ${{ matrix.index }}"
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        experimentalKeyQueues: [ false, true ]
+        parallelism: [5]
+        index: [0, 1, 2, 3, 4]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: ./go.mod
+
+      - name: Build dev server
+        run: go build -cover -o ./inngest-bin ./cmd
+
+      - name: Install tools
+        run: go install tool
+
+      - name: Run E2E tests
+        run: |
+          echo "Running dev server"
+          mkdir $GOCOVERDIR
+          nohup ./inngest-bin dev --no-discovery 2> /tmp/dev-output.txt &
+          echo "Ran dev server"
+          sleep 5
+          curl http://127.0.0.1:8288/dev > /dev/null 2> /dev/null
+
+          gotesplit -total ${{ matrix.parallelism }} -index ${{ matrix.index }} ./tests/golang -- -v -count=1
+        env:
+          API_URL: http://127.0.0.1:8288
+          INNGEST_EVENT_KEY: test
+          INNGEST_SIGNING_KEY: 7468697320697320612074657374206b6579
+          INNGEST_DEV: http://127.0.0.1:8288
+          TEST_MODE: true
+          EXPERIMENTAL_KEY_QUEUES_ENABLE: "${{ matrix.experimentalKeyQueues }}"
+
+      - name: Convert coverage for tooling
+        run: |
+          ls -la $GOCOVERDIR
+          # pass in all the directories in coverage to be merged
+          go tool covdata percent -i=$GOCOVERDIR | tee coverage.txt
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: go-e2e,split-${{ matrix.index }},kq-${{ matrix.experimentalKeyQueues }}
+
+  execution:
+    name: "Execution / OS: (${{ matrix.os }}), key-queues: ${{ matrix.experimentalKeyQueues }}"
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        experimentalKeyQueues: [ false, true ]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: ./go.mod
+
+      - name: Run execution tests
+        run: go test ./tests/execution/... -v -count=1 -coverprofile=coverage.txt
+        env:
+          EXPERIMENTAL_KEY_QUEUES_ENABLE: "${{ matrix.experimentalKeyQueues }}"
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: exec,kq-${{ matrix.experimentalKeyQueues }}

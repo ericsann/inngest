@@ -1,0 +1,16 @@
+syntax = "proto3";
+package debug.v1;
+
+import "debug/v1/queue.proto";
+
+option go_package = "github.com/inngest/inngest/proto/gen/debug/v1;debug";
+
+service Debug {
+  // GetPartition retrieves the partition data from the database
+  rpc GetPartition(PartitionRequest) returns (PartitionResponse) {}
+  // GetPartition retrieves additional status of the partition from the queue
+  // directly
+  rpc GetPartitionStatus(PartitionRequest) returns (PartitionStatusResponse) {}
+  // GetQueueItem retrieves the queue item object from the queue
+  rpc GetQueueItem(QueueItemRequest) returns (QueueItemResponse) {}
+}
