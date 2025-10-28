@@ -9,6 +9,10 @@ function LoginForm() {
   const [error, setError] = useState(searchParams.get('error') === '1');
   const [loading, setLoading] = useState(false);
 
+  console.log('[LOGIN] Component rendered');
+  console.log('[LOGIN] Search params:', searchParams.toString());
+  console.log('[LOGIN] Error from params:', searchParams.get('error'));
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
@@ -17,7 +21,10 @@ function LoginForm() {
     const formData = new FormData(e.currentTarget);
     const password = formData.get('password') as string;
 
+    console.log('[LOGIN] Submitting form with password:', password ? '***' : 'empty');
+
     try {
+      console.log('[LOGIN] Making API call to /api/login');
       const response = await fetch('/api/login', {
         method: 'POST',
         headers: {
@@ -26,12 +33,18 @@ function LoginForm() {
         body: JSON.stringify({ password }),
       });
 
+      console.log('[LOGIN] API response status:', response.status);
+      console.log('[LOGIN] API response ok:', response.ok);
+
       if (response.ok) {
+        console.log('[LOGIN] Login successful, redirecting to /');
         router.push('/');
       } else {
+        console.log('[LOGIN] Login failed');
         setError(true);
       }
     } catch (err) {
+      console.log('[LOGIN] API call error:', err);
       setError(true);
     } finally {
       setLoading(false);
