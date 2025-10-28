@@ -1,4 +1,4 @@
-FROM node:20-alpine
+FROM node:20-alpine AS base
 
 WORKDIR /app
 
@@ -21,8 +21,18 @@ RUN pnpm install
 # Build the application
 RUN pnpm --filter @inngest/dev-server-ui build
 
+# Production stage
+FROM node:20-alpine AS runner
+
+WORKDIR /app
+
+# Copy built application from base stage
+COPY --from=base /app/apps/dev-server-ui/.next/standalone ./apps/dev-server-ui/
+COPY --from=base /app/apps/dev-server-ui/.next/static ./apps/dev-server-ui/.next/static
+COPY --from=base /app/apps/dev-server-ui/public ./apps/dev-server-ui/public
+
 # Expose port
 EXPOSE 3000
 
 # Start the application
-CMD ["pnpm", "--filter", "@inngest/dev-server-ui", "start"]
+CMD ["node", "apps/dev-server-ui/apps/dev-server-ui/server.js"]

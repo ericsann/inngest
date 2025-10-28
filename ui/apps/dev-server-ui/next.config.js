@@ -2,8 +2,14 @@
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  distDir: './dist',
+  output: 'standalone',
   transpilePackages: ['@inngest/components'],
+  experimental: {
+    // @ts-ignore
+    turbopack: {
+      root: '/app',
+    },
+  },
 };
 
 module.exports = nextConfig;
